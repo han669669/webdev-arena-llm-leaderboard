@@ -12,7 +12,7 @@ The recreated leaderboard includes input and output costs, providing a more deta
 - Tailwind CSS v3
 - Radix UI v1
 - Lucide React (icons)
-- Hosted on [render.com](https://render.com)
+- Hosted on [vercel.com/](https://vercel.com/)
 - Based on [v0.dev](https://v0.dev) ai starter template
 
 ## Getting Started
