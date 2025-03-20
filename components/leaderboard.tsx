@@ -133,7 +133,7 @@ export function Leaderboard() {
   const [searchQuery, setSearchQuery] = useState("")
 
   // Format current date as "15 March 2024"
-  const currentDate = new Date("2025-03-13T20:49:02+08:00")
+  const currentDate = new Date("2025-03-21T03:41:48+08:00")
   const formattedDate = currentDate.toLocaleDateString("en-US", {
     day: "numeric",
     month: "long",
@@ -211,7 +211,7 @@ export function Leaderboard() {
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div className="flex items-center gap-2 text-sm text-muted-foreground bg-white/80 dark:bg-slate-800/80 px-3 py-1.5 rounded-full shadow-sm border border-indigo-100 dark:border-indigo-900/50">
             <Calendar className="h-4 w-4 text-indigo-500" />
-            <span>Last updated: {formattedDate}</span>
+            <span>Last updated: {formattedDate}<small> (data verified by human)</small></span>
           </div>
 
           <div className="flex w-full sm:w-auto">
