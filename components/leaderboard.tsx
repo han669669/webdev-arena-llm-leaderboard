@@ -133,7 +133,7 @@ export function Leaderboard() {
   const [searchQuery, setSearchQuery] = useState("")
 
   // Format current date as "15 March 2024"
-  const currentDate = new Date("2025-03-21T03:41:48+08:00")
+  const currentDate = new Date("2025-03-27T03:04:51+08:00")
   const formattedDate = currentDate.toLocaleDateString("en-US", {
     day: "numeric",
     month: "long",
