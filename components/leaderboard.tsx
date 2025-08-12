@@ -11,6 +11,8 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { Card, CardContent, CardFooter } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 
+import { orgIconMap, resolveOrgIcon } from "./orgIconMap"
+
 type SortDirection = "asc" | "desc" | null
 type SortColumn =
   | "rank"
@@ -62,7 +64,7 @@ function ModelCard({ item, index }: { item: (typeof actualData)[0]; index: numbe
             <h3
               className={`flex items-center text-lg ${index <= 2 ? "font-semibold text-indigo-900 dark:text-indigo-300" : "font-medium"}`}
             >
-                              <img src={`/${item.organization.toLowerCase()}.svg`} alt={item.organization} className="mr-2 h-5 w-5"  />
+              <img src={`/${resolveOrgIcon(item.organization)}.svg`} alt={item.organization} className="mr-2 h-5 w-5"  />
               {item.model}
             </h3>
             <p className="text-sm text-muted-foreground mt-1">{item.organization}</p>
@@ -108,7 +110,7 @@ function ModelCard({ item, index }: { item: (typeof actualData)[0]; index: numbe
               <div className="text-sm text-indigo-600 dark:text-indigo-400 font-medium mb-1 flex items-center gap-1">
                 <HelpCircle className="h-4 w-4" /> 95% CI
               </div>
-              <div className="font-medium">{item.ci}</div>
+              <div className="font-medium whitespace-nowrap">{item.ci}</div>
             </div>
             <div className="bg-indigo-50/50 dark:bg-indigo-950/30 p-3 rounded-lg">
               <div className="text-sm text-indigo-600 dark:text-indigo-400 font-medium mb-1">Votes</div>
@@ -117,6 +119,9 @@ function ModelCard({ item, index }: { item: (typeof actualData)[0]; index: numbe
             <div className="col-span-2 bg-indigo-50/50 dark:bg-indigo-950/30 p-3 rounded-lg">
               <div className="text-sm text-indigo-600 dark:text-indigo-400 font-medium mb-1">License</div>
               <div className="font-medium">{item.license}</div>
+            </div>
+            <div className="col-span-2 text-xs text-muted-foreground mt-1">
+              Ties: Models may share the same rank; higher Arena Score appears first (1, 2, 2, 3…).
             </div>
           </div>
         </div>
@@ -127,18 +132,18 @@ function ModelCard({ item, index }: { item: (typeof actualData)[0]; index: numbe
 
 // Leaderboard component
 export function Leaderboard() {
-  const [data, setData] = useState(actualData)
+  const initialData = [...actualData].sort((a, b) => {
+    if (a.rank !== b.rank) return a.rank - b.rank
+    // Secondary sort to keep ties stable and meaningful
+    return b.arenaScore - a.arenaScore
+  })
+  const [data, setData] = useState(initialData)
   const [sortColumn, setSortColumn] = useState<SortColumn>("rank")
   const [sortDirection, setSortDirection] = useState<SortDirection>("asc")
   const [searchQuery, setSearchQuery] = useState("")
 
-  // Format current date as "15 March 2024"
-  const currentDate = new Date("2025-03-27T03:04:51+08:00")
-  const formattedDate = currentDate.toLocaleDateString("en-US", {
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  })
+  // Fixed "Last updated" date per user request
+  const fixedLastUpdated = "August 12, 2025"
 
   const handleSort = (column: SortColumn) => {
     if (sortColumn === column) {
@@ -211,7 +216,7 @@ export function Leaderboard() {
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div className="flex items-center gap-2 text-sm text-muted-foreground bg-white/80 dark:bg-slate-800/80 px-3 py-1.5 rounded-full shadow-sm border border-indigo-100 dark:border-indigo-900/50">
             <Calendar className="h-4 w-4 text-indigo-500" />
-            <span>Last updated: {formattedDate}<small> (data verified by human)</small></span>
+            <span>Last updated: {fixedLastUpdated} <small>(data verified by human)</small></span>
           </div>
 
           <div className="flex w-full sm:w-auto">
@@ -237,6 +242,16 @@ export function Leaderboard() {
               <Badge variant="outline" className="ml-2">
                 {filteredData.length} total
               </Badge>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button variant="ghost" className="p-0 h-auto ml-1" aria-label="Sorting info">
+                    <HelpCircle className="h-4 w-4 text-muted-foreground" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="top" align="start" className="z-50 max-w-xs text-xs">
+                  <p>Default sort: ascending by Rank. Ties are broken by higher Arena Score. Tied ranks show as 1, 2, 2, 3…</p>
+                </TooltipContent>
+              </Tooltip>
             </div>
           </div>
 
@@ -251,18 +266,30 @@ export function Leaderboard() {
             </div>
 
             {/* Desktop view (table layout) */}
-            <div className="hidden sm:block relative overflow-x-auto rounded-lg">
+            <div className="hidden sm:block relative overflow-x-auto overflow-y-visible rounded-lg">
               <Table className="border-indigo-100 dark:border-indigo-900/50 w-full">
                 <TableHeader className="bg-indigo-50/70 dark:bg-indigo-950/30 backdrop-blur-sm">
                   <TableRow className="hover:bg-indigo-100/50 dark:hover:bg-indigo-900/20 transition-colors">
                     <TableHead className="w-[5%] font-medium text-base">
-                      <Button
-                        variant="ghost"
-                        className="flex items-center p-0 h-auto font-medium text-base"
-                        onClick={() => handleSort("rank")}
-                      >
-                        Rank {getSortIcon("rank")}
-                      </Button>
+                      <div className="flex items-center">
+                        <Button
+                          variant="ghost"
+                          className="flex items-center p-0 h-auto font-medium text-base"
+                          onClick={() => handleSort("rank")}
+                        >
+                          Rank {getSortIcon("rank")}
+                        </Button>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button variant="ghost" className="p-0 h-auto ml-1" aria-label="Rank sorting info">
+                              <HelpCircle className="h-4 w-4 text-muted-foreground" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent side="top" align="start" className="z-50 max-w-xs text-xs">
+                            <p>Default sort: ascending by Rank. When two models share a rank, higher Arena Score appears first. Tied ranks display as 1, 2, 2, 3…</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </div>
                     </TableHead>
                     <TableHead className="w-[20%] font-medium text-base">
                       <Button
@@ -315,7 +342,7 @@ export function Leaderboard() {
                               <HelpCircle className="h-4 w-4 text-muted-foreground" />
                             </Button>
                           </TooltipTrigger>
-                          <TooltipContent>
+                          <TooltipContent side="top" align="start" className="z-50 max-w-xs text-xs">
                             <p>95% Confidence Interval</p>
                           </TooltipContent>
                         </Tooltip>
@@ -382,12 +409,12 @@ export function Leaderboard() {
                         <TableCell className="font-medium py-4 text-base">
                           {index <= 2 ? (
                             <div className="flex items-center">
-                              <img src={`/${item.organization.toLowerCase()}.svg`} alt={item.organization} className="mr-2 h-5 w-5" />
+                              <img src={`/${resolveOrgIcon(item.organization)}.svg`} alt={item.organization} className="mr-2 h-5 w-5" />
                               <span className="font-semibold text-indigo-900 dark:text-indigo-300">{item.model}</span>
                             </div>
                           ) : (
                             <div className="flex items-center">
-                              <img src={`/${item.organization.toLowerCase()}.svg`} alt={item.organization} className="mr-2 h-5 w-5" />
+                              <img src={`/${resolveOrgIcon(item.organization)}.svg`} alt={item.organization} className="mr-2 h-5 w-5" />
                               {item.model}
                             </div>
                           )}
@@ -400,7 +427,7 @@ export function Leaderboard() {
                         </TableCell>
                         <TableCell className="py-4 text-base">{item.inputCost}</TableCell>
                         <TableCell className="py-4 text-base">{item.outputCost}</TableCell>
-                        <TableCell className="py-4 text-base">{item.ci}</TableCell>
+                        <TableCell className="py-4 text-base"><span className="whitespace-nowrap">{item.ci}</span></TableCell>
                         <TableCell className="py-4 text-base">{item.votes.toLocaleString()}</TableCell>
                         <TableCell className="py-4 text-base hidden lg:table-cell">{item.organization}</TableCell>
                         <TableCell className="py-4 text-base">{item.license}</TableCell>
